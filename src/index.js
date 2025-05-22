@@ -12,8 +12,6 @@ app.use(rutas)
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`)
-    //console.log('hola mundo')
-    //console.log('todo bien')
 })
 
 
