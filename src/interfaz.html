@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Usuarios</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    h1, h2 {
+      color: #333;
+    }
+
+    input, button {
+      margin: 5px 0;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .usuarios-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .usuario-card {
+      background-color: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      width: 250px;
+    }
+
+    .usuario-card input {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .usuario-card .acciones {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .usuario-card input[disabled] {
+      background-color: white;
+      border: none;
+    }
+
+    #mensaje {
+      margin-top: 10px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gestión de Usuarios</h1>
+
+  <h2>Crear Usuario</h2>
+  <input type="text" id="nombre" placeholder="Nombre">
+  <input type="email" id="correo" placeholder="Correo">
+  <button onclick="crearUsuario()">Crear</button>
+  <div id="mensaje"></div>
+
+  <h2>Usuarios</h2>
+  <button onclick="cargarUsuarios()">Cargar Usuarios</button>
+  <div class="usuarios-container" id="usuariosContainer">
+    <!-- Tarjetas de usuarios -->
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/usuarios';
+
+    async function cargarUsuarios() {
+      const res = await fetch(API_URL);
+      const usuarios = await res.json();
+      const contenedor = document.getElementById('usuariosContainer');
+      contenedor.innerHTML = '';
+
+      usuarios.forEach(usuario => {
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'usuario-card';
+
+        tarjeta.innerHTML = `
+          <input id="nombre-${usuario.id}" value="${usuario.nombre}" disabled>
+          <input id="correo-${usuario.id}" value="${usuario.correo}" disabled>
+          <div class="acciones">
+            <button id="editar-${usuario.id}" onclick="toggleEdicion(${usuario.id})">Editar</button>
+            <button onclick="eliminarUsuario(${usuario.id})" style="background-color: #e74c3c;">Eliminar</button>
+          </div>
+        `;
+
+        contenedor.appendChild(tarjeta);
+      });
+    }
+
+    async function crearUsuario() {
+      const nombre = document.getElementById('nombre').value;
+      const correo = document.getElementById('correo').value;
+
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, correo })
+      });
+
+      if (res.ok) {
+        document.getElementById('mensaje').textContent = 'Usuario creado correctamente';
+        setTimeout(() => document.getElementById('mensaje').textContent = '', 3000);
+      }
+
+      document.getElementById('nombre').value = '';
+      document.getElementById('correo').value = '';
+    }
+
+    async function eliminarUsuario(id) {
+      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      if (res.status === 204 || res.status === 200) {
+        cargarUsuarios();
+      } else {
+        alert('Error al eliminar usuario');
+      }
+    }
+
+    async function toggleEdicion(id) {
+      const inputNombre = document.getElementById(`nombre-${id}`);
+      const inputCorreo = document.getElementById(`correo-${id}`);
+      const boton = document.getElementById(`editar-${id}`);
+
+      const estaEditando = !inputNombre.disabled;
+
+      if (estaEditando) {
+        // GUARDAR
+        const nombre = inputNombre.value;
+        const correo = inputCorreo.value;
+
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, correo })
+        });
+
+        if (!res.ok) {
+          alert('Error al actualizar');
+          return;
+        }
+
+        inputNombre.disabled = true;
+        inputCorreo.disabled = true;
+        boton.textContent = 'Editar';
+      } else {
+        // HABILITAR EDICIÓN
+        inputNombre.disabled = false;
+        inputCorreo.disabled = false;
+        boton.textContent = 'Guardar';
+      }
+    }
+
+    // Nota: Ya no se llama cargarUsuarios() automáticamente
+  </script>
+
+</body>
+</html>
+
+
+
